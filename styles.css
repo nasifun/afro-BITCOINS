@@ -145,3 +145,22 @@ body {
   color: #555;
   font-style: italic;
 }
+
+.invoice-output {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #222;
+  border-radius: 8px;
+  color: #ccc;
+  text-align: center;
+}
+
+.invoice-output code {
+  word-break: break-all;
+  background-color: #111;
+  padding: 0.5rem;
+  display: block;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-family: monospace;
+}

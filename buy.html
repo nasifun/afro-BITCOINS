@@ -61,6 +61,16 @@
     <h2>Buy Bitcoin</h2>
     <form id="buyForm">
       <div class="form-group">
+  <button type="button" id="generateInvoice">Generate Invoice</button>
+</div>
+<div id="invoiceOutput" class="invoice-output" style="display: none;">
+  <p><strong>Fake Lightning Invoice:</strong></p>
+  <code id="invoiceText">lnbc1234567890fakeinvoiceexamplexyz...</code>
+  <p><strong>QR Code:</strong></p>
+  <img id="qrImage" src="" alt="QR Code" width="200" />
+</div>
+  
+      <div class="form-group">
         <label for="euroAmount">Amount in €</label>
         <input type="number" id="euroAmount" placeholder="e.g. 100" required />
       </div>
@@ -106,6 +116,25 @@
     }
   });
 </script>
+
+<script>
+  const invoiceBtn = document.getElementById('generateInvoice');
+  const invoiceOutput = document.getElementById('invoiceOutput');
+  const invoiceText = document.getElementById('invoiceText');
+  const qrImage = document.getElementById('qrImage');
+
+  invoiceBtn.addEventListener('click', function () {
+    // Simulate a fake invoice string
+    const invoice = 'lnbc1fakeafrobitcoinsinvoiceexample987654321';
+    invoiceText.textContent = invoice;
+
+    // Generate QR code using an external API (via image)
+    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(invoice)}&size=200x200`;
+
+    invoiceOutput.style.display = 'block';
+  });
+</script>
+
 
 </body>
 </html>
