@@ -175,3 +175,42 @@ body {
 .sidebar nav li:hover {
   background-color: #333;
 }
+
+@media screen and (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    border-right: none;
+    border-bottom: 1px solid #222;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .dashboard-cards {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .price-controls button {
+    margin-top: 1rem;
+    width: 100%;
+  }
+
+  .profile-container,
+  .buy-container,
+  .transactions-container {
+    margin: 2rem 1rem;
+    padding: 1.5rem;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+}
