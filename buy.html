@@ -72,20 +72,40 @@
   </div>
 
   <script>
-    const form = document.getElementById('buyForm');
-    const result = document.getElementById('btcResult');
-    const fakeBTCPrice = 89940.59; // hardcoded for now
+  const form = document.getElementById('buyForm');
+  const result = document.getElementById('btcResult');
+  const euroInput = document.getElementById('euroAmount');
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const euro = parseFloat(document.getElementById('euroAmount').value);
-      if (euro > 0) {
-        const btc = euro / fakeBTCPrice;
-        result.textContent = `Estimated BTC: ₿${btc.toFixed(8)}`;
-      } else {
-        result.textContent = '';
-      }
+  let liveBTCPrice = null;
+
+  // Fetch BTC price on page load
+  fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur")
+    .then(response => response.json())
+    .then(data => {
+      liveBTCPrice = data.bitcoin.eur;
+      console.log("Live BTC price (EUR):", liveBTCPrice);
+    })
+    .catch(err => {
+      console.error("Failed to fetch BTC price", err);
     });
-  </script>
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const euro = parseFloat(euroInput.value);
+
+    if (!liveBTCPrice) {
+      result.textContent = "⚠️ BTC price not loaded. Try again later.";
+      return;
+    }
+
+    if (euro > 0) {
+      const btc = euro / liveBTCPrice;
+      result.textContent = `Estimated BTC: ₿${btc.toFixed(8)} (at €${liveBTCPrice.toLocaleString()} per BTC)`;
+    } else {
+      result.textContent = '';
+    }
+  });
+</script>
+
 </body>
 </html>
