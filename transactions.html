@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaction History - AFROBITCOINS</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .transactions-container {
+      background-color: #151515;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 4rem auto;
+      border-radius: 12px;
+    }
+
+    .transactions-container h2 {
+      color: #f7931a;
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #ccc;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      color: #f7931a;
+    }
+
+    tr:hover {
+      background-color: #222;
+    }
+  </style>
+</head>
+<body>
+  <div class="transactions-container">
+    <h2>Transaction History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2025-06-21</td>
+          <td>Buy BTC</td>
+          <td>€50 → ₿0.00055</td>
+          <td>✅ Completed</td>
+        </tr>
+        <tr>
+          <td>2025-06-20</td>
+          <td>Sell BTC</td>
+          <td>₿0.00010 → €9.00</td>
+          <td>✅ Completed</td>
+        </tr>
+        <tr>
+          <td>2025-06-18</td>
+          <td>Receive BTC</td>
+          <td>₿0.00025</td>
+          <td>✅ Confirmed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

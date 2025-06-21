@@ -164,3 +164,14 @@ body {
   margin-bottom: 1rem;
   font-family: monospace;
 }
+
+.sidebar nav a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+
+.sidebar nav li:hover {
+  background-color: #333;
+}
