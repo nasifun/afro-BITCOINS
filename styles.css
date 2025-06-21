@@ -1,0 +1,147 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0d0d0d;
+  color: white;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #151515;
+  border-right: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0;
+}
+
+.logo {
+  width: 120px;
+  margin-bottom: 2rem;
+}
+
+.sidebar nav ul {
+  width: 100%;
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar nav li {
+  padding: 1rem;
+  color: #aaa;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sidebar nav li.active,
+.sidebar nav li:hover {
+  background-color: #222;
+  color: white;
+}
+
+.main {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: #0d0d0d;
+}
+
+.dashboard-cards {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  flex: 1;
+  background-color: #151515;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  background-color: #222;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+
+.card-action {
+  font-size: 0.75rem;
+}
+
+.card-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.price-chart {
+  background-color: #151515;
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+.price-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.price-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.price-change {
+  color: #ff4d4d;
+  font-size: 1rem;
+}
+
+.price-eur {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.price-controls button {
+  background-color: #f7931a;
+  border: none;
+  padding: 0.7rem 1.4rem;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chart-placeholder {
+  background-color: #0d0d0d;
+  height: 250px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-style: italic;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AFROBITCOINS Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <img src="main-log.png" alt="Logo" class="logo" />
+      <nav>
+        <ul>
+          <li class="active">Home</li>
+          <li>Activity</li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="dashboard-cards">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">€</span>
+            <span class="card-label">Cash balance</span>
+            <span class="card-action">Details</span>
+          </div>
+          <div class="card-value">€0.00</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">₿</span>
+            <span class="card-label">Bitcoin balance</span>
+            <span class="card-action">Details</span>
+          </div>
+          <div class="card-value">₿0.00017723</div>
+        </div>
+      </div>
+
+      <div class="price-chart">
+        <div class="price-top">
+          <div class="price-info">
+            <span class="price-change">-0.94%</span>
+            <span class="price-eur">€89,940.59</span>
+          </div>
+          <div class="price-controls">
+            <button>Buy</button>
+            <button>Sell</button>
+          </div>
+        </div>
+        <div class="chart-placeholder">[Chart placeholder]</div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
