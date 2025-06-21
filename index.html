@@ -6,23 +6,51 @@
   <title>AFROBITCOINS Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .time-btn {
+      background-color: #222;
+      border: 1px solid #444;
+      color: #f7931a;
+      padding: 0.4rem 1rem;
+      margin-right: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .time-btn:hover {
+      background-color: #333;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f7931a;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
+
 <body>
   <div class="container">
     <aside class="sidebar">
       <img src="main-log2.png" alt="Logo" class="logo" />
       <nav>
         <ul>
-          <nav>
-  <ul>
-    <li><a href="index.html">Home</a></li>
-    <li><a href="buy.html">Buy</a></li>
-    <li><a href="profile.html">Profile</a></li>
-    <li><a href="transactions.html">Transactions</a></li>
-  </ul>
-</nav>
-
-          <li>Activity</li>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="buy.html">Buy</a></li>
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="transactions.html">Transactions</a></li>
         </ul>
       </nav>
     </aside>
@@ -51,23 +79,122 @@
       <div class="price-chart">
         <div class="price-top">
           <div class="price-info">
-            <span class="price-change">-0.94%</span>
-            <span class="price-eur">€89,940.59</span>
+            <span class="price-change">Live BTC Price</span>
+            <span class="price-eur" id="btc-price">
+              <span id="btc-price-text">Loading...</span>
+              <span id="btc-spinner" class="spinner"></span>
+            </span>
           </div>
           <div class="price-controls">
             <a href="buy.html"><button>Buy Bitcoin</button></a>
-
             <button>Selling</button>
           </div>
         </div>
-        <!-- Place this inside your buy.html or index.html where you want the chart -->
-<div class="chart-widget" style="margin-top: 2rem;">
-  <iframe src="https://www.tradingview.com/widgetembed/?frameElementId=tradingview_0c1de&symbol=BTCUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hidevolume=0&hideideas=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=yourdomain.com&utm_medium=widget&utm_campaign=chart&utm_term=BTCUSD"
-    width="100%" height="400" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
-</div>
 
+        <div class="btc-chart-container" style="margin-top: 2rem; background: #151515; padding: 1.5rem; border-radius: 10px;">
+          <h3 style="color: #f7931a;">BTC Price Chart</h3>
+          <div style="margin-bottom: 1rem;">
+            <button onclick="loadChart('1')" class="time-btn">1D</button>
+            <button onclick="loadChart('7')" class="time-btn">7D</button>
+            <button onclick="loadChart('30')" class="time-btn">30D</button>
+          </div>
+          <canvas id="btcChart" height="120"></canvas>
+        </div>
       </div>
     </main>
   </div>
+
+  <script>
+    // Live BTC Price (current)
+    function fetchLivePrice() {
+      const priceText = document.getElementById('btc-price-text');
+      const spinner = document.getElementById('btc-spinner');
+      if (spinner) spinner.style.display = 'inline-block';
+
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur')
+        .then(res => res.json())
+        .then(data => {
+          const price = data.bitcoin.eur.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'EUR'
+          });
+          priceText.textContent = price;
+        })
+        .catch(() => {
+          priceText.textContent = 'Error';
+        })
+        .finally(() => {
+          if (spinner) spinner.style.display = 'none';
+        });
+    }
+
+    // Chart
+    let btcChart;
+    let currentDays = '1';
+    let autoRefresh;
+
+    function loadChart(days = '1') {
+      currentDays = days;
+      if (btcChart) btcChart.destroy();
+      if (autoRefresh) clearInterval(autoRefresh);
+
+      fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=eur&days=${days}`)
+        .then(response => response.json())
+        .then(data => {
+          const prices = data.prices;
+          const labels = prices.map(p => {
+            const date = new Date(p[0]);
+            return days === '1'
+              ? `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`
+              : `${date.getDate()}/${date.getMonth() + 1}`;
+          });
+          const priceData = prices.map(p => p[1]);
+
+          const ctx = document.getElementById('btcChart').getContext('2d');
+          btcChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: `BTC Price (Last ${days} Day${days > 1 ? 's' : ''})`,
+                data: priceData,
+                borderColor: '#f7931a',
+                backgroundColor: 'rgba(247, 147, 26, 0.05)',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4
+              }]
+            },
+            options: {
+              animation: { duration: 800 },
+              responsive: true,
+              scales: {
+                x: { ticks: { color: '#888', maxTicksLimit: 10 } },
+                y: { ticks: { color: '#fff' } }
+              },
+              plugins: {
+                legend: { labels: { color: '#fff' } },
+                tooltip: {
+                  backgroundColor: '#333',
+                  titleColor: '#f7931a',
+                  bodyColor: '#fff',
+                  borderColor: '#f7931a',
+                  borderWidth: 1
+                }
+              }
+            }
+          });
+        });
+
+      autoRefresh = setInterval(() => loadChart(currentDays), 300000);
+    }
+
+    // On load
+    window.onload = () => {
+      fetchLivePrice();
+      loadChart('1');
+      setInterval(fetchLivePrice, 300000); // refresh price every 5 min
+    };
+  </script>
 </body>
 </html>
