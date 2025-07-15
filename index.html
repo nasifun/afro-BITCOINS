@@ -108,72 +108,111 @@
           </form>
           <h3 style="color:#fff">📋 Investment History</h3>
           <table>
-  <thead>
-    <tr>
-      <th>EUR Invested</th>
-      <th>BTC Price at Purchase</th>
-      <th>Date & Time</th>
-      <th>Current Value (€)</th>
-      <th>Profit/Loss (€)</th>
-    </tr>
-  </thead>
-  <tbody id="investmentTable"></tbody>
-</table>
-
+            <thead>
+              <tr>
+                <th>EUR Invested</th>
+                <th>BTC Price at Purchase</th>
+                <th>Date & Time</th>
+                <th>Current Value (€)</th>
+                <th>Profit/Loss (€)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="investmentTable"></tbody>
+          </table>
         </div>
       </div>
     </main>
   </div>
 
   <script>
-    let investments = JSON.parse(localStorage.getItem('investments') || '[]');
-    let btcChart;
-    let btcHistory = [];
-    let currentBTCPrice = 0;
+let investments = JSON.parse(localStorage.getItem('investments') || '[]');
+let btcChart;
+let btcHistory = [];
+let currentBTCPrice = 0;
 
-    async function fetchLivePrice() {
-      const priceText = document.getElementById('btc-price-text');
-      const spinner = document.getElementById('btc-spinner');
-      spinner.style.display = 'inline-block';
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
-        const data = await res.json();
-        currentBTCPrice = data.bitcoin.eur;
-        priceText.textContent = currentBTCPrice.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
-        renderInvestments(); // update profit/loss with new price
-      } catch {
-        priceText.textContent = 'Error';
-      } finally {
-        spinner.style.display = 'none';
-      }
-    }
+// --- Historical price fetchers ---
+async function fetchBTCPriceAtDateTimeSmart(datetimeStr) {
+  const dt = new Date(datetimeStr);
+  const from = Math.floor((dt.getTime() - 2 * 3600 * 1000) / 1000);
+  const to   = Math.floor((dt.getTime() + 2 * 3600 * 1000) / 1000);
 
-    async function fetchChartData() {
-      const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=eur&days=365');
-      const data = await res.json();
-      return data.prices.map(p => ({ x: new Date(p[0]), y: p[1] }));
-    }
-
-    function findPriceAtDateTime(dtString) {
-      const dt = new Date(dtString);
-      // Find closest time in btcHistory
-      let closest = btcHistory[0];
-      let minDiff = Math.abs(dt - btcHistory[0].x);
-      for (let i = 1; i < btcHistory.length; i++) {
-        const diff = Math.abs(dt - btcHistory[i].x);
+  try {
+    // CoinGecko hourly (last ~90 days)
+    const cgUrl = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=eur&from=${from}&to=${to}`;
+    let res = await fetch(cgUrl);
+    let data = await res.json();
+    if (data.prices && data.prices.length > 0) {
+      let closest = data.prices[0];
+      let minDiff = Math.abs(dt.getTime() - closest[0]);
+      for (let i = 1; i < data.prices.length; i++) {
+        const diff = Math.abs(dt.getTime() - data.prices[i][0]);
         if (diff < minDiff) {
           minDiff = diff;
-          closest = btcHistory[i];
+          closest = data.prices[i];
         }
       }
-      return Math.round(closest.y * 100) / 100;
+      return { eur: closest[1], timestamp: closest[0], source: 'CoinGecko Hourly' };
     }
+
+    // Fallback: CryptoCompare for daily price (any date)
+    const dateOnly = datetimeStr.split('T')[0];
+    const ccPrice = await fetchBTCPriceCryptoCompare(dateOnly);
+    if (ccPrice) {
+      return { eur: ccPrice, timestamp: dt.getTime(), source: 'CryptoCompare Daily' };
+    }
+
+    // Fallback: CoinGecko /history (rarely needed)
+    const [year, month, day] = datetimeStr.split('T')[0].split('-');
+    const historyUrl = `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${day}-${month}-${year}&localization=false`;
+    res = await fetch(historyUrl);
+    data = await res.json();
+    const price = data.market_data?.current_price?.eur;
+    if (price) {
+      return { eur: price, timestamp: new Date(`${year}-${month}-${day}T00:00:00Z`).getTime(), source: 'CoinGecko Daily' };
+    }
+  } catch (err) {}
+  return { eur: null, timestamp: null, source: null };
+}
+
+async function fetchBTCPriceCryptoCompare(dateString) {
+  const dt = new Date(dateString);
+  const ts = Math.floor(dt.getTime() / 1000);
+  const url = `https://min-api.cryptocompare.com/data/pricehistorical?fsym=BTC&tsyms=EUR&ts=${ts}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.BTC?.EUR;
+}
+
+async function fetchLivePrice() {
+  const priceText = document.getElementById('btc-price-text');
+  const spinner = document.getElementById('btc-spinner');
+  spinner.style.display = 'inline-block';
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+    const data = await res.json();
+    currentBTCPrice = data.bitcoin.eur;
+    priceText.textContent = currentBTCPrice.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+    renderInvestments();
+  } catch {
+    priceText.textContent = 'Error';
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+async function fetchChartData() {
+  const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=eur&days=365');
+  const data = await res.json();
+  return data.prices.map(p => ({ x: new Date(p[0]), y: p[1] }));
+}
+
 function renderInvestments() {
   let totalInvested = 0;
   let totalCurrentValue = 0;
   let totalProfitLoss = 0;
 
-  const rows = investments.map(inv => {
+  const rows = investments.map((inv, i) => {
     const amountEUR = Number(inv.eur);
     const priceAtPurchase = Number(inv.btcPriceAtPurchase);
     const btcAmount = amountEUR / priceAtPurchase;
@@ -195,11 +234,13 @@ function renderInvestments() {
         <td>${new Date(inv.datetime).toLocaleString()}</td>
         <td>€${currentValue.toFixed(2)}</td>
         <td>${profitLossFormatted}</td>
+        <td>
+          <button class="delete-btn" data-index="${i}" style="background:#222; color:#e74c3c; border:1px solid #e74c3c; border-radius:4px; cursor:pointer; padding:4px 12px;">🗑️ Delete</button>
+        </td>
       </tr>
     `;
   }).join('');
 
-  // Add TOTAL row
   const totalProfitLossFormatted = totalProfitLoss >= 0
     ? `<span style="color:#31e700;">+€${totalProfitLoss.toFixed(2)}</span>`
     : `<span style="color:#e74c3c;">-€${Math.abs(totalProfitLoss).toFixed(2)}</span>`;
@@ -211,43 +252,64 @@ function renderInvestments() {
       <td style="color:#f7931a;">TOTAL</td>
       <td>€${totalCurrentValue.toFixed(2)}</td>
       <td>${totalProfitLossFormatted}</td>
+      <td></td>
     </tr>
   `;
 
   document.getElementById('investmentTable').innerHTML = rows + totalRow;
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = Number(this.getAttribute('data-index'));
+      investments.splice(idx, 1);
+      localStorage.setItem('investments', JSON.stringify(investments));
+      btcChart.data.datasets[1].data.splice(idx, 1);
+      btcChart.update();
+      renderInvestments();
+    });
+  });
 }
 
-
-   async function drawChart() {
+async function drawChart() {
   const ctx = document.getElementById('btcChart').getContext('2d');
   btcHistory = await fetchChartData();
+
+  // DCA dots:
+  const dcaDots = investments.map(inv => ({
+    x: new Date(inv.datetime),
+    y: Number(inv.btcPriceAtPurchase)
+  }));
+
+  const labels = btcHistory.map(p => p.x);
+  const dataLine = btcHistory.map(p => p.y);
+
+  if (btcChart) btcChart.destroy();
+
   btcChart = new Chart(ctx, {
-    type: 'scatter',
+    type: 'line',
     data: {
+      labels: labels,
       datasets: [
         {
           label: 'BTC Price (EUR)',
-          data: btcHistory,
+          data: dataLine,
           borderColor: '#ffb119',
-          borderWidth: 2,
-          backgroundColor: 'rgba(247,147,26,0.10)',
-          showLine: true,
-          fill: false,
+          borderWidth: 3,
+          backgroundColor: 'rgba(247,147,26,0.12)',
           pointRadius: 0,
-          tension: 0.2,
+          tension: 0.8,
+          fill: false,
           order: 1
         },
         {
           label: 'Your DCA Buys',
-          data: investments.map(inv => ({
-            x: new Date(inv.datetime),
-            y: Number(inv.btcPriceAtPurchase)
-          })),
+          data: dcaDots,
           type: 'scatter',
-          pointRadius: 8,
+          pointRadius: 11,
           pointBackgroundColor: '#fff',
           pointBorderColor: '#f7931a',
-          pointBorderWidth: 3,
+          pointBorderWidth: 5,
+          showLine: false,
           order: 2
         }
       ]
@@ -255,7 +317,11 @@ function renderInvestments() {
     options: {
       responsive: true,
       scales: {
-        x: { type: 'time', time: { tooltipFormat: 'YYYY-MM-DD HH:mm', unit: 'month' }, ticks: { color: '#888' } },
+        x: { 
+          type: 'time', 
+          time: { tooltipFormat: 'YYYY-MM-DD HH:mm', unit: 'month' }, 
+          ticks: { color: '#888' }
+        },
         y: { ticks: { color: '#fff' } }
       },
       plugins: { legend: { labels: { color: '#fff' } } }
@@ -264,40 +330,43 @@ function renderInvestments() {
   renderInvestments();
 }
 
+document.getElementById('investmentForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const eur = document.getElementById('amountEUR').value;
+  const datetime = document.getElementById('investmentDateTime').value;
+  if (!eur || !datetime) return;
 
-    document.getElementById('investmentForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const eur = document.getElementById('amountEUR').value;
-      const datetime = document.getElementById('investmentDateTime').value;
-      if (!eur || !datetime || !btcHistory.length) return;
-      const btcPriceAtPurchase = findPriceAtDateTime(datetime);
-      const newInv = { eur, btcPriceAtPurchase, datetime };
-      investments.push(newInv);
-      localStorage.setItem('investments', JSON.stringify(investments));
-      btcChart.data.datasets[1].data.push({ x: new Date(datetime), y: btcPriceAtPurchase });
-      btcChart.update();
-      renderInvestments();
-      this.reset();
-    });
+  // Fetch actual historical price (for any date)
+  const priceObj = await fetchBTCPriceAtDateTimeSmart(datetime);
+  if (!priceObj.eur) {
+    alert('No BTC price data found for this time.');
+    return;
+  }
+  const btcPriceAtPurchase = priceObj.eur;
 
-    document.getElementById('resetBtn').addEventListener('click', function () {
-      investments = [];
-      localStorage.removeItem('investments');
-      btcChart.data.datasets[1].data = [];
-      btcChart.update();
-      renderInvestments();
-    });
+  const newInv = { eur, btcPriceAtPurchase, datetime };
+  investments.push(newInv);
+  localStorage.setItem('investments', JSON.stringify(investments));
+  btcChart.data.datasets[1].data.push({ x: new Date(datetime), y: btcPriceAtPurchase });
+  btcChart.update();
+  renderInvestments();
+  this.reset();
+});
 
-    window.onload = async () => {
-      await fetchLivePrice();
-      await drawChart();
-      setInterval(fetchLivePrice, 300000);
-    };
+document.getElementById('resetBtn').addEventListener('click', function () {
+  investments = [];
+  localStorage.removeItem('investments');
+  btcChart.data.datasets[1].data = [];
+  btcChart.update();
+  renderInvestments();
+});
 
-    
+window.onload = async () => {
+  await fetchLivePrice();
+  await drawChart();
+  setInterval(fetchLivePrice, 300000);
+};
+</script>
 
-
-    
-  </script>
 </body>
 </html>
